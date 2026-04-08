@@ -1,1 +1,104 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Sales Intelligence Automator</title>
+    <link rel="stylesheet" href="/static/style.css">
+</head>
+<body>
 
+<div class="container">
+    <h1>Sales Intelligence Automator</h1>
+
+    <p>Enter leads (URLs or company names):</p>
+
+    <textarea id="leads" placeholder="Enter one lead per line..."></textarea>
+
+    <button onclick="runAnalysis()" id="analyzeBtn">Analyze Leads</button>
+
+    <!-- Loading Section -->
+    <div id="loading" class="loading">
+        <p>Analyzing leads... Please wait</p>
+        <div class="spinner"></div>
+    </div>
+
+    <h2>Results:</h2>
+    <div id="results"></div>
+</div>
+
+<script>
+async function runAnalysis() {
+    const leads = document.getElementById("leads").value
+        .split("\n")
+        .map(l => l.trim())
+        .filter(l => l.length > 0);
+
+    const button = document.getElementById("analyzeBtn");
+    const loading = document.getElementById("loading");
+    const resultsDiv = document.getElementById("results");
+
+    // Show loading
+    loading.style.display = "block";
+    resultsDiv.innerHTML = "";
+    button.disabled = true;
+    button.innerText = "Analyzing...";
+
+    try {
+        const response = await fetch("/analyze", {
+            method: "POST",
+            headers: {"Content-Type": "application/json"},
+            body: JSON.stringify({leads})
+        });
+
+        const data = await response.json();
+
+        data.results.forEach(item => {
+            const div = document.createElement("div");
+            div.className = "card";
+
+            if (item.error) {
+                div.innerHTML = `
+                    <h3>${item.lead}</h3>
+                    <p class="error">  ${item.error}</p>
+                `;
+            } else {
+                const a = item.analysis;
+
+                div.innerHTML = `
+                    <h3>
+                        ${item.lead}
+                        ${item.ai_generated ? '<span class="tag">(AI Generated)</span>' : ''}
+                    </h3>
+
+                    <p><strong>Company Overview:</strong><br>${a.company_overview}</p>
+                    <p><strong>Core Service:</strong><br>${a.core_service}</p>
+                    <p><strong>Target Customer:</strong><br>${a.target_customer}</p>
+
+                    <p><strong>B2B Qualified:</strong> 
+                        <span class="${a.b2b_qualified === 'Yes' ? 'yes' : 'no'}">
+                            ${a.b2b_qualified}
+                        </span>
+                    </p>
+
+                    <p><strong>Sales Questions:</strong></p>
+                    <ul>
+                        ${a.sales_questions.map(q => `<li>${q}</li>`).join("")}
+                    </ul>
+                `;
+            }
+
+            resultsDiv.appendChild(div);
+        });
+
+    } catch (err) {
+        resultsDiv.innerHTML = `<p class="error">Error: ${err}</p>`;
+    }
+
+    // Hide loading
+    loading.style.display = "none";
+    button.disabled = false;
+    button.innerText = "Analyze Leads";
+}
+</script>
+
+</body>
+</html>
