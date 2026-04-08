@@ -153,10 +153,3 @@ With more time, the system can be enhanced with:
 - PostgreSQL for persistent storage
 - Background job queue (Celery)
 
-#  Key Highlights
-
-- End-to-end automated lead research system
-- Handles real-world scraping failures
-- AI-powered structured insights
-- Clean and intuitive web interface
-- Fully runnable in GitHub Codespaces (zero setup)
