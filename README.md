@@ -3,13 +3,18 @@
 ##  Overview
 Sales teams spend significant time researching leads before outreach. This project automates that process by collecting company data from the web and generating structured, AI-powered sales insights.
 
-The system accepts raw leads (URLs or company names), gathers relevant information, and produces a structured sales brief including company overview, services, target audience, B2B qualification, and suggested sales questions.
+The system accepts raw leads (URLs or company names), gathers relevant information, and produces a structured sales brief including:
+- Company Overview
+- Core Product/Service
+- Target Customer
+- B2B Qualification
+- Suggested Sales Questions
 
 ---
 
 #  Project Structure
 
-```
+```text
 sales-intelligence-automator/
 │
 ├── app/
@@ -21,6 +26,9 @@ sales-intelligence-automator/
 ├── frontend/
 │ ├── index.html # Web UI
 │ └── style.css # Styling
+│
+├── .devcontainer/
+│ └── devcontainer.json # Codespaces setup
 │
 ├── requirements.txt
 └── README.md
@@ -38,34 +46,56 @@ sales-intelligence-automator/
 - OpenAI
 - Python-dotenv
 
-Install dependencies:
+---
+
+#  Run Using GitHub Codespaces (Recommended)
+
+This project is fully configured to run in GitHub Codespaces with minimal setup.
+
+## Steps:
+
+1. Open the repository on GitHub  
+2. Click **Code → Codespaces → Create Codespace**  
+3. Wait for environment setup (dependencies auto-install)
+
+---
+
+##  Set API Key
+
+Run in terminal:
+
+```bash
+export OPENAI_API_KEY=your_api_key_here
+```
+
+Or add it in:
+
+GitHub → Settings → Secrets → Codespaces
+
+###  Run the Server
+
+```bash
+python -m uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+```
+
+###  Open the Application
+
+- Go to Ports tab
+- Open Port 8000
+- The web UI will load automatically
+
+###  Run Locally (Optional)
 
 ```bash
 pip install -r requirements.txt
+python -m uvicorn app.main:app --reload
 ```
 
-#  Environment Setup
+Open:
 
-Create a `.env` file in the root directory:
+http://127.0.0.1:8000
 
-```env
-OPENAI_API_KEY=your_api_key_here
-```
-
-#  How to Run the Project
-
-1. Start the backend server
-```bash
-uvicorn app.main:app --reload
-```
-
-2. Open the application
-
-Go to: http://127.0.0.1:8000
-
-The web interface will load automatically.
-
-#  How to Use the Web Interface
+##  How to Use the Web Interface
 
 Enter leads (one per line):
 - Website URLs OR
@@ -73,52 +103,60 @@ Enter leads (one per line):
 
 Click "Analyze Leads"
 The system will:
-1. Resolve company names to websites
-2. Scrape relevant content (homepage + internal pages)
-3. Analyze using LLM
-4. Display structured results
+- Resolve company names to websites (DuckDuckGo)
+- Scrape homepage + internal pages
+- Analyze using LLM
+- Display structured results
 
 If scraping fails:
-- The system uses AI fallback
-- Results are marked as "(AI Generated)"
+- AI fallback is used
+- Result is labeled "(AI Generated)"
 
-#  Design Notes
+# System Architecture
 
-## System Architecture
+The system is designed as a modular pipeline consisting of lead ingestion, website resolution, web scraping, content cleaning, and LLM-based analysis. Each lead is processed independently, enabling scalability and future integration with CRMs or background processing systems.
 
-The system is designed as a modular pipeline with clearly separated stages: lead ingestion, website resolution, web scraping, content cleaning, and LLM-based analysis. Each lead is processed independently, enabling scalability and future integration with asynchronous job queues or external systems like CRMs.
+The scraper resolves company names into real websites using DuckDuckGo and extracts content from the homepage and selected internal pages to ensure meaningful context.
 
-The scraper first attempts to resolve company names into actual websites using DuckDuckGo search. It then extracts content from the homepage and a limited number of internal links to balance performance and data richness. The cleaned content is passed to the LLM for structured analysis.
+# Technology Choices
 
-## Technology Choices
+FastAPI was chosen for its asynchronous capabilities and simplicity in building APIs. Requests and BeautifulSoup provide a lightweight yet effective scraping solution.
 
-FastAPI was chosen for its simplicity, speed, and built-in support for async processing. Requests and BeautifulSoup provide a lightweight and reliable scraping solution suitable for this prototype. OpenAI's LLM was used for generating structured business insights due to its strong natural language understanding capabilities.
+OpenAI LLM is used for generating structured business insights due to its strong natural language understanding. DuckDuckGo was selected over Google to reduce scraping restrictions.
 
-DuckDuckGo was used instead of Google to avoid scraping restrictions and improve reliability in resolving company names to websites.
+# Handling Edge Cases
 
-## Handling Edge Cases
+Real-world web scraping is unreliable, so multiple safeguards were implemented:
 
-Real-world web scraping is inherently unreliable. This system includes multiple safeguards:
-- Retry logic for failed HTTP requests
-- Query cleaning and fallback strategies for noisy lead inputs
-- Handling of redirect URLs from search engines
-- Content size limiting to prevent LLM overload
-- Graceful fallback to AI-based inference when scraping fails
+- Retry logic for failed requests
+- Query cleaning for noisy lead inputs
+- Handling redirect URLs from search engines
+- Limiting number of pages scraped for performance
+- Graceful fallback to AI when scraping fails
 
-If a website cannot be accessed or parsed, the system still generates useful insights using the lead input and clearly labels the result as AI-generated.
+This ensures the system continues to provide value even when web data is unavailable.
 
-## LLM Reliability & Validation
+# LLM Reliability
 
-To ensure consistent and structured outputs, prompt engineering is used to enforce strict JSON responses. A validation layer checks for required fields and correct structure before returning results.
+Strict prompt design ensures structured JSON output. A validation layer checks for required fields and format correctness.
 
-Low temperature settings are used to reduce randomness and improve determinism. In case of invalid or failed responses, fallback logic ensures the system remains robust.
+Low temperature settings reduce randomness and improve consistency. Fallback handling ensures robustness even when the model output is imperfect.
 
-## Future Improvements
+# Future Improvements
 
-Given more time, the following enhancements would be implemented:
-- Headless browser scraping (e.g., Playwright) for JavaScript-heavy websites
-- Multi-source enrichment (search APIs, business directories)
-- Smarter page selection (prioritizing "About" and "Services" pages)
-- Vector database + RAG for improved context retrieval
-- Persistent storage (PostgreSQL) for lead history
-- Background task queue (Celery) for large-scale processing
+With more time, the system can be enhanced with:
+
+- Headless browser scraping (Playwright) for JavaScript-heavy sites
+- Smarter page selection (About, Services prioritization)
+- Multi-source enrichment APIs
+- Vector database + RAG pipeline
+- PostgreSQL for persistent storage
+- Background job queue (Celery)
+
+#  Key Highlights
+
+- End-to-end automated lead research system
+- Handles real-world scraping failures
+- AI-powered structured insights
+- Clean and intuitive web interface
+- Fully runnable in GitHub Codespaces (zero setup)
