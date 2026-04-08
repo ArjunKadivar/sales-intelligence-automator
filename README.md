@@ -103,7 +103,7 @@ Enter leads (one per line):
 
 Click "Analyze Leads"
 The system will:
-- Resolve company names to websites (DuckDuckGo)
+- Resolve company names to websites
 - Scrape homepage + internal pages
 - Analyze using LLM
 - Display structured results
